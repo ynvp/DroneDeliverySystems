@@ -6,6 +6,7 @@ warehouse_locations = [
 customer_locations = []
 charging_point_locations = [['CP1', (34.98694, -101.27501)]]
 products_weights = []
+selected_products = []
 
 
 def calculate_shortest_path():
@@ -16,7 +17,7 @@ def calculate_shortest_path():
 
     # Initialize the total weight and selected products list
     total_weight = 0
-    selected_products = []
+    # selected_products = []
 
     # Iterate over the sorted products and weights
     for product, weight in sorted_products_weights:

@@ -67,7 +67,7 @@ class App(tkinter.Tk):
         self.clear_marker_button.grid(row=1, column=0, pady=10, padx=10)
 
         self.connect_marker_button = tkinter.Button(master=self.listbox_button_frame, width=20, text="connect marker with path",
-                                                    command=self.connect_marker)
+                                                    command=self.connect_marker_products)
         self.connect_marker_button.grid(row=2, column=0, pady=10, padx=10)
 
         self.map_widget.set_address("NYC")
@@ -95,9 +95,11 @@ class App(tkinter.Tk):
         print('weight: ', inputDialog.weight)
         print("Add marker:", coords)
         new_marker = self.map_widget.set_marker(
-            coords[0], coords[1], text="Customer"+str(self.current_marker), command=self.assign_weight("C"+str(self.current_marker), inputDialog.weight))
+            coords[0], coords[1], text="Customer" +
+            str(self.current_marker)+'\n Package weight: '+inputDialog.weight,
+            command=self.assign_weight("Customer"+str(self.current_marker), inputDialog.weight))
         r.customer_locations.append(
-            ["C"+str(self.current_marker), (coords[0], coords[1])])
+            ["Customer"+str(self.current_marker), (coords[0], coords[1])])
         print(r.customer_locations)
         self.current_marker += 1
         self.marker_list.append(new_marker)
@@ -137,11 +139,26 @@ class App(tkinter.Tk):
         self.connect_marker()
         self.current_marker = 1
 
+    def connect_marker_products(self):
+        print('hello')
+        position_list = []
+        for marker in self.marker_list:
+            print(marker.text.split('\n')[0])
+            if marker.text.split('\n')[0] in r.selected_products:
+                position_list.append(marker.position)
+
+        if self.marker_path is not None:
+            self.map_widget.delete(self.marker_path)
+
+        if len(position_list) > 0:
+            self.marker_path = self.map_widget.set_path(position_list)
+
     def connect_marker(self):
         print(self.marker_list)
         position_list = []
 
         for marker in self.marker_list:
+
             position_list.append(marker.position)
 
         if self.marker_path is not None:

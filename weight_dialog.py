@@ -12,6 +12,7 @@ class MyDialog:
         self.myEntryBox.place(x=60, y=90)
         self.mySubmitButton = tk.Button(top, text='Submit', command=self.send)
         self.mySubmitButton.place(x=90, y=150)
+        self.myEntryBox.focus()
 
     def send(self):
         self.weight = self.myEntryBox.get()
