@@ -8,8 +8,6 @@ MAX_TRAVEL_DISTANCE = 20
 
 
 
-
-
 def calculate_distance_matrix(dimension, locations_combined):
     distance_matrix = np.zeros((dimension, dimension))
     print(distance_matrix)

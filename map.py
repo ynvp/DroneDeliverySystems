@@ -3,6 +3,8 @@ import tkinter
 import tkinter.messagebox
 from tkinter import ttk
 from tkintermapview import TkinterMapView
+import run as r
+import weight_dialog as wd
 
 
 class App(tkinter.Tk):
@@ -79,20 +81,31 @@ class App(tkinter.Tk):
                                                      command=self.add_marker_event,
                                                      pass_coords=True)
         self.current_marker = 1
-        # self.my_slider = ttk.Scale(
-        #     self, from_=4, to=20, orient=tkinter.HORIZONTAL, command=self.slide)
-        # self.my_slider.grid(row=0, column=3)
 
-    # def slide(self, e):
-    #     self.map_widget.set_zoom(self.my_slider.get())
+        btn = tkinter.Button(self, text="Click Me",
+                             bg="black", fg="white", command=self.run)
+        btn.grid(column=1, row=3)
+
+    def run(self):
+        r.calculate_shortest_path()
 
     def add_marker_event(self, coords):
+        inputDialog = wd.MyDialog(self)
+        self.wait_window(inputDialog.top)
+        print('weight: ', inputDialog.weight)
         print("Add marker:", coords)
         new_marker = self.map_widget.set_marker(
-            coords[0], coords[1], text="Customer"+str(self.current_marker))
+            coords[0], coords[1], text="Customer"+str(self.current_marker), command=self.assign_weight("C"+str(self.current_marker), inputDialog.weight))
+        r.customer_locations.append(
+            ["C"+str(self.current_marker), (coords[0], coords[1])])
+        print(r.customer_locations)
         self.current_marker += 1
         self.marker_list.append(new_marker)
         self.search_marker = new_marker
+
+    def assign_weight(self, customer, weight):
+        r.products_weights.append([customer, int(weight)])
+        print(r.products_weights)
 
     def search(self, event=None):
         if not self.search_in_progress:
