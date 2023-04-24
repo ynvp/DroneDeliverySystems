@@ -1,12 +1,14 @@
 import implementation as ip
 from python_tsp.exact import solve_tsp_dynamic_programming
 
+
 warehouse_locations = [
     ['W1', (40.7194939, - 74.0767397)], ['W2', (34.99031, -101.23098)]]
 customer_locations = []
 charging_point_locations = [['CP1', (34.98694, -101.27501)]]
 products_weights = []
 selected_products = []
+selected_products_copy = []
 
 
 def calculate_shortest_path():
@@ -29,9 +31,10 @@ def calculate_shortest_path():
         # If it doesn't, add the weight of the product to the total weight and append the product to the selected products list
         total_weight += weight
         selected_products.append(product)
+        selected_products_copy.append(product)
 
     print("Selected products: ", sorted(selected_products))
-
+    print(selected_products_copy)
     current_location = warehouse_locations[0]
 
     # Added 1 for current location
@@ -57,8 +60,8 @@ def calculate_shortest_path():
         customer_locations)]
 
     # distance_between_charging_points =
-    print(distance_between_warehouses)
-    print(distance_between_customers)
+    print('distance_between_warehouses: ', distance_between_warehouses)
+    print('distance_between_customers: ', distance_between_customers)
 
     distance_matrix[:, 0] = 0
     permutation, distance = solve_tsp_dynamic_programming(distance_matrix)
@@ -67,4 +70,5 @@ def calculate_shortest_path():
         print(locations_combined_labels[i]+"-->", end="")
 
     print(distance)
+
     # if(distance>ipMAX_TRAVEL_DISTANCE)

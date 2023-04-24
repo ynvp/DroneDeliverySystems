@@ -86,8 +86,14 @@ class App(tkinter.Tk):
                              bg="black", fg="white", command=self.run)
         btn.grid(column=1, row=3)
 
+        self.default_warehouse_marker = self.map_widget.set_marker(
+            40.7194939, - 74.0767397, text="warehouse", text_color="green")
+        self.marker_list.append(self.default_warehouse_marker)
+
     def run(self):
         r.calculate_shortest_path()
+        r.selected_products = []
+        print(r.selected_products_copy)
 
     def add_marker_event(self, coords):
         inputDialog = wd.MyDialog(self)
@@ -139,20 +145,27 @@ class App(tkinter.Tk):
         self.connect_marker()
         self.current_marker = 1
 
+    # Modified marker connector function
     def connect_marker_products(self):
-        print('hello')
+        print(r.selected_products_copy)
         position_list = []
+        position_list.append(self.default_warehouse_marker.position)
+        print(position_list)
         for marker in self.marker_list:
-            print(marker.text.split('\n')[0])
-            if marker.text.split('\n')[0] in r.selected_products:
+            if marker.text.split('\n')[0] in r.selected_products_copy:
+                print(marker.text.split('\n')[0])
                 position_list.append(marker.position)
 
         if self.marker_path is not None:
             self.map_widget.delete(self.marker_path)
 
+        print(position_list)
+
         if len(position_list) > 0:
             self.marker_path = self.map_widget.set_path(position_list)
+        r.selected_products_copy.clear()
 
+    # Inbuilt marker connector function
     def connect_marker(self):
         print(self.marker_list)
         position_list = []
