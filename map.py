@@ -5,11 +5,11 @@ from tkinter import ttk
 from tkintermapview import TkinterMapView
 import run as r
 import weight_dialog as wd
+import current_location as cl
 
 
 class App(tkinter.Tk):
-
-    APP_NAME = "map_view_demo.py"
+    APP_NAME = "map_view.py"
     WIDTH = 800
     HEIGHT = 750
 
@@ -73,42 +73,71 @@ class App(tkinter.Tk):
         self.map_widget.set_address("NYC")
 
         self.marker_list = []
+        self.warehouse_marker_list = []
         self.marker_path = None
 
         self.search_marker = None
         self.search_in_progress = False
-        self.map_widget.add_right_click_menu_command(label="Add Marker",
-                                                     command=self.add_marker_event,
+        self.map_widget.add_right_click_menu_command(label="Add Customer",
+                                                     command=self.add_customer_marker_event,
                                                      pass_coords=True)
-        self.current_marker = 1
+        self.map_widget.add_right_click_menu_command(label="Add Warehouse",
+                                                     command=self.add_warehouse_marker_event,
+                                                     pass_coords=True)
+        self.current_customer_marker = 1
+        self.current_warehouse_marker = 2
 
         btn = tkinter.Button(self, text="Click Me",
                              bg="black", fg="white", command=self.run)
         btn.grid(column=1, row=3)
 
         self.default_warehouse_marker = self.map_widget.set_marker(
-            40.7194939, - 74.0767397, text="warehouse", text_color="green")
-        self.marker_list.append(self.default_warehouse_marker)
+            40.7194939, - 74.0767397, text="Warehouse1", text_color="green")
+        self.warehouse_marker_list.append(self.default_warehouse_marker)
 
     def run(self):
-        r.calculate_shortest_path()
-        r.selected_products = []
-        print(r.selected_products_copy)
+        inputDialog = cl.CurrentLocation(self)
+        self.wait_window(inputDialog.top)
+        print('current location: ', inputDialog.location)
+        self.formatted_warehouse_locations = dict([(location[0], location[1])
+                                                   for location in r.warehouse_locations])
 
-    def add_marker_event(self, coords):
+        marker_list_warehouses = dict([(warehouse.text.split(
+            '\n')[0], warehouse) for warehouse in self.warehouse_marker_list])
+        print(marker_list_warehouses)
+        self.current_warehouse_location_marker = marker_list_warehouses[
+            inputDialog.location]
+        current_loc = self.formatted_warehouse_locations[inputDialog.location]
+        self.final_path = r.calculate_shortest_path(
+            [inputDialog.location, current_loc])
+        r.selected_products = []
+
+    def add_customer_marker_event(self, coords):
         inputDialog = wd.MyDialog(self)
         self.wait_window(inputDialog.top)
         print('weight: ', inputDialog.weight)
-        print("Add marker:", coords)
+        print("Added customer marker:", coords)
         new_marker = self.map_widget.set_marker(
             coords[0], coords[1], text="Customer" +
-            str(self.current_marker)+'\n Package weight: '+inputDialog.weight,
-            command=self.assign_weight("Customer"+str(self.current_marker), inputDialog.weight))
+            str(self.current_customer_marker) +
+            '\n Package weight: '+inputDialog.weight,
+            command=self.assign_weight("Customer"+str(self.current_customer_marker), inputDialog.weight))
         r.customer_locations.append(
-            ["Customer"+str(self.current_marker), (coords[0], coords[1])])
+            ["Customer"+str(self.current_customer_marker), (coords[0], coords[1])])
         print(r.customer_locations)
-        self.current_marker += 1
+        self.current_customer_marker += 1
         self.marker_list.append(new_marker)
+        self.search_marker = new_marker
+
+    def add_warehouse_marker_event(self, coords):
+        print("Added warehouse location:", coords)
+        new_marker = self.map_widget.set_marker(
+            coords[0], coords[1], text="Warehouse" + str(self.current_warehouse_marker))
+        r.warehouse_locations.append(
+            ["Warehouse"+str(self.current_warehouse_marker), (coords[0], coords[1])])
+        print(r.warehouse_locations)
+        self.current_warehouse_marker += 1
+        self.warehouse_marker_list.append(new_marker)
         self.search_marker = new_marker
 
     def assign_weight(self, customer, weight):
@@ -143,17 +172,20 @@ class App(tkinter.Tk):
         self.marker_list_box.delete(0, tkinter.END)
         self.marker_list.clear()
         self.connect_marker()
-        self.current_marker = 1
+        self.current_warehouse_marker = 1
+        self.current_customer_marker = 1
 
     # Modified marker connector function
     def connect_marker_products(self):
-        print(r.selected_products_copy)
         position_list = []
-        position_list.append(self.default_warehouse_marker.position)
-        print(position_list)
-        for marker in self.marker_list:
-            if marker.text.split('\n')[0] in r.selected_products_copy:
-                print(marker.text.split('\n')[0])
+        position_list.append(self.current_warehouse_location_marker.position)
+        marker_list_customers = dict([(customer.text.split(
+            '\n')[0], customer) for customer in self.marker_list])
+        print(marker_list_customers)
+        for package in self.final_path:
+            if package in marker_list_customers:
+                marker = marker_list_customers[package]
+                print(marker)
                 position_list.append(marker.position)
 
         if self.marker_path is not None:
