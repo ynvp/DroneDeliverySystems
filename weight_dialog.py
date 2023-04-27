@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-class MyDialog:
+class WeightDialog:
 
     def __init__(self, parent):
         top = self.top = tk.Toplevel(parent)

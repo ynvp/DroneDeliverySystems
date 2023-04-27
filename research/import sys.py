@@ -1,13 +1,14 @@
 import sys
 import tkinter
 import tkinter.messagebox
+from tkinter import ttk
 from tkintermapview import TkinterMapView
 import run as r
 import weight_dialog as wd
 import current_location as cl
 
 
-class App(tkinter.Tk):
+class App(tkinter.Tk,):
     APP_NAME = "Drone Delivery System"
 
     def __init__(self, *args, **kwargs):
@@ -32,7 +33,7 @@ class App(tkinter.Tk):
         self.grid_columnconfigure(1, weight=0)
         self.grid_columnconfigure(2, weight=0)
         self.grid_columnconfigure(3)
-        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(0)
 
         self.search_bar = tkinter.Entry(self, width=50)
         self.search_bar.grid(row=0, column=0, pady=10, padx=10, sticky="we")
@@ -52,26 +53,25 @@ class App(tkinter.Tk):
 
         self.marker_list_box = tkinter.Listbox(self, height=8)
         self.marker_list_box.grid(
-            row=2, column=0, columnspan=1, sticky="ew", padx=10, pady=10)
+            row=2, column=0, sticky="ew", padx=10, pady=10)
 
         self.listbox_button_frame = tkinter.Frame(master=self)
         self.listbox_button_frame.grid(
-            row=2, column=1, sticky="nsew", columnspan=2)
+            row=2, column=1, sticky="nsew")
 
         self.listbox_button_frame.grid_columnconfigure(0, weight=1)
 
-        btn = tkinter.Button(master=self.listbox_button_frame, width=20, text="Calculate Path",
-                             bg="green", fg="white", command=self.run)
-        btn.grid(row=0, column=0, pady=10, padx=10)
-
-        self.clear_marker_button = tkinter.Button(master=self.listbox_button_frame, width=20, text="clear marker list",
-                                                  command=self.clear_marker_list)
-        self.clear_marker_button.grid(row=1, column=0, pady=10, padx=10)
+        self.algo_btn = tkinter.Button(master=self.listbox_button_frame, width=20, text="Calculate Path",
+                                       bg="green", fg="white", command=self.run)
+        self.algo_btn.grid(row=0, column=0, pady=10, padx=10)
 
         self.connect_marker_button = tkinter.Button(master=self.listbox_button_frame, width=20, text="connect marker with path",
                                                     command=self.connect_marker_products)
-        self.connect_marker_button.grid(row=2, column=0, pady=10, padx=10)
+        self.connect_marker_button.grid(row=1, column=0, pady=10, padx=10)
 
+        self.clear_marker_button = tkinter.Button(master=self.listbox_button_frame, width=20, text="clear marker list",
+                                                  command=self.clear_marker_list)
+        self.clear_marker_button.grid(row=2, column=0, pady=10, padx=10)
         self.map_widget.set_address("NYC")
 
         self.marker_list = []
@@ -108,24 +108,23 @@ class App(tkinter.Tk):
             if len(r.charging_points) > 0:
                 tkinter.messagebox.showwarning(
                     'warning', 'Charging points were not added. This may affect path.')
-            self.inputDialog = cl.CurrentLocation(self)
+            self.inputDialog = cl.CurrentLocation(self.tk)
             self.wait_window(self.inputDialog.top)
             print('log: current location - ', self.inputDialog.location)
-            self.formatted_warehouses = list(r.warehouses.keys())
-            print(self.formatted_warehouses)
+            self.formatted_warehouses = dict([(location[0], location[1])
+                                              for location in r.warehouses])
 
             marker_list_warehouses = dict([(warehouse.text.split(
                 '\n')[0], warehouse) for warehouse in self.warehouse_marker_list])
             print('log: ', marker_list_warehouses)
             self.current_warehouse_marker = marker_list_warehouses[
                 self.inputDialog.location]
-            current_loc = r.warehouses[self.inputDialog.location]
+            current_loc = self.formatted_warehouses[self.inputDialog.location]
             if (current_loc == None):
                 tkinter.messagebox.showerror(
                     'error', 'No current location set!.')
             self.final_path = r.deliver_packages(
                 [self.inputDialog.location, current_loc])
-            print(self.final_path)
             r.selected_packages = []
         else:
             if len(r.warehouses) == 0:
@@ -147,12 +146,10 @@ class App(tkinter.Tk):
             str(self.current_customer_counter) +
             '\n Package weight: '+self.inputDialog.weight,
             command=self.assign_weight("Customer"+str(self.current_customer_counter), self.inputDialog.weight))
-        # r.delivery_locations.append(
-        #     ["Customer"+str(self.current_customer_counter), (coords[0], coords[1])])
-        r.delivery_locations['Customer' +
-                             str(self.current_customer_counter)] = (coords[0], coords[1])
+        r.delivery_locations.append(
+            ["Customer"+str(self.current_customer_counter), (coords[0], coords[1])])
         self.marker_list_box.insert(
-            tkinter.END, "Customer " + str(self.current_customer_counter) + " with Package weight: "+self.inputDialog.weight+" added")
+            tkinter.END, "Customer " + str(self.current_customer_counter) + " - Package weight: "+self.inputDialog.weight)
         self.marker_list_box.see(tkinter.END)
         self.current_customer_counter += 1
         self.marker_list.append(new_marker)
@@ -162,10 +159,10 @@ class App(tkinter.Tk):
         print("Added warehouse location:", coords)
         new_marker = self.map_widget.set_marker(
             coords[0], coords[1], text="Warehouse" + str(self.current_warehouse_counter), text_color="green")
-        r.warehouses["Warehouse" +
-                     str(self.current_warehouse_counter)] = (coords[0], coords[1])
+        r.warehouses.append(
+            ["Warehouse"+str(self.current_warehouse_counter), (coords[0], coords[1])])
         self.marker_list_box.insert(
-            tkinter.END, "Warehouse " + str(self.current_warehouse_counter)+" added")
+            tkinter.END, "Warehouse" + str(self.current_warehouse_counter))
         self.marker_list_box.see(tkinter.END)
         self.current_warehouse_counter += 1
         self.warehouse_marker_list.append(new_marker)
@@ -176,17 +173,17 @@ class App(tkinter.Tk):
         new_marker = self.map_widget.set_marker(
             coords[0], coords[1], text="ChargingPoint" +
             str(self.current_charging_point_counter))
-        r.charging_points["ChargingPoint" +
-                          str(self.current_charging_point_counter)] = (coords[0], coords[1])
+        r.charging_points.append(
+            ["ChargingPoint"+str(self.current_charging_point_counter), (coords[0], coords[1])])
         self.marker_list_box.insert(
-            tkinter.END, "ChargingPoint "+str(self.current_charging_point_counter)+" added")
+            tkinter.END, "ChargingPoint"+str(self.current_charging_point_counter))
         self.marker_list_box.see(tkinter.END)
         self.current_charging_point_counter += 1
         self.charging_points_marker_list.append(new_marker)
         self.search_marker = new_marker
 
     def assign_weight(self, customer, weight):
-        r.package_weights[customer] = int(weight)
+        r.package_weights.append([customer, int(weight)])
         print('log: Product weight assigned successfully!')
         print(r.package_weights)
 
@@ -213,6 +210,7 @@ class App(tkinter.Tk):
                 self.search_marker = None
             self.search_in_progress = False
 
+    # Button deleted
     def save_marker(self):
         if self.search_marker is not None:
             self.marker_list_box.insert(
@@ -247,14 +245,12 @@ class App(tkinter.Tk):
         position_list = []
         if self.current_warehouse_marker != None:
             position_list.append(self.current_warehouse_marker.position)
-            marker_list_combined = dict([(customer.text.split(
+            marker_list_customers = dict([(customer.text.split(
                 '\n')[0], customer) for customer in self.marker_list])
-            marker_list_combined.update(dict(
-                [(cp.text, cp) for cp in self.charging_points_marker_list]))
-            print(marker_list_combined)
+            print(marker_list_customers)
             for package in self.final_path:
-                if package in marker_list_combined:
-                    marker = marker_list_combined[package]
+                if package in marker_list_customers:
+                    marker = marker_list_customers[package]
                     print(marker)
                     position_list.append(marker.position)
 

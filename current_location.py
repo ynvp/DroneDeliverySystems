@@ -5,14 +5,14 @@ import run as r
 class CurrentLocation:
 
     def __init__(self, parent):
-        options = [location[0] for location in r.warehouse_locations]
+        options = list(r.warehouses.keys())
         print(options)
         self.clicked = tk.StringVar()
-        self.clicked.set(r.warehouse_locations[0][0])
+        self.clicked.set(list(r.warehouses.keys())[0])
         top = self.top = tk.Toplevel(parent)
         top.geometry("230x200")
         self.myLabel = tk.Label(
-            top, text='Enter current warehouse location below')
+            top, text='Select initial warehouse')
         self.myLabel.place(x=40, y=50)
         self.myEntryBox = tk.Entry(top)
         self.selectWarehouse = tk.OptionMenu(top, self.clicked, *options)
