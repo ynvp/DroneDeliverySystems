@@ -75,13 +75,11 @@ def calculate_shortest_path(current_location):
         distance_matrix[:, 0] = 0
         path, distance = solve_tsp_dynamic_programming(distance_matrix)
 
-        concat_path = ''
         for i in path:
-            concat_path += locations_combined_labels[i]+'-->'
-        print(concat_path[:-3])
+            print(locations_combined_labels[i]+"-->", end="")
 
         path_labels = [locations_combined_labels[i] for i in path]
-        print('Total_distance: ', distance)
+        print(distance)
         return path_labels
 
 
@@ -93,22 +91,30 @@ def deliver_packages(starting_warehouse_location):
 
     route = calculate_shortest_path(
         starting_warehouse_location)
-
+    print(route)
     current_location = starting_warehouse_location[1]
+    print(current_location)
 
     for location in route:
+        print(location)
         if location in delivery_locations.keys():
-            # package_index = location
-            # package_weight = package_weights[location]
+            print(location)
+            package_index = location
+            package_weight = package_weights[location]
             distance = calculate_distance(
                 current_location, delivery_locations[location])
-
+            print(distance)
+            # Removing code
+            # if distance > drone_max_distance:
+            #     print(
+            #         f"Cannot deliver package to {location}. Distance exceeds drone's maximum travel distance.")
+            #     continue
             print(distance, current_charge)
-            # Adding 10 for current_charge to add power buffer
-            if distance * (drone_max_charge/drone_max_distance) > current_charge+10:
+            if distance * (drone_max_charge/drone_max_distance) > current_charge:
                 charging_point = find_nearest_charging_point(
                     current_location, delivery_locations[location], charging_points)
                 # # Check if drone able to reach the charging point with current charge
+                # if cp_distance * package_weight > current_charge:
 
                 route.insert(route.index(location),
                              charging_point)
@@ -122,11 +128,8 @@ def deliver_packages(starting_warehouse_location):
                 (drone_max_charge/drone_max_distance)
             print(
                 f"Delivered package to {location}. Current charge: {current_charge}")
-    # Searching for nearest warehouse location to reach
-    route = find_nearest_warehouse(
-        route, current_location,  drone_max_charge, drone_max_distance, current_charge)
 
-    print(f"Delivery completed. Returning to the {route[-1]} point.")
+    print("Delivery completed. Returning to the starting point.")
     return route
 
 
@@ -146,23 +149,14 @@ def find_nearest_charging_point(current_location, upcoming_location, charging_po
     return nearest_charging_point
 
 
-def find_nearest_warehouse(route, current_location, drone_max_charge, drone_max_distance, current_charge):
+def find_nearest_warehouse(last_location):
     min_distance = float('inf')
-    selected_warehouse = ''
     for warehouse in warehouses:
         distance = calculate_distance(
-            warehouses[warehouse], current_location)
+            warehouse, last_location)
         if distance < min_distance:
             min_distance = distance
-            selected_warehouse = warehouse
     if min_distance * (drone_max_charge/drone_max_distance) > current_charge:
-        charging_point = find_nearest_charging_point(
-            current_location, warehouses[selected_warehouse], charging_points)
-        route.append(charging_point)
-
-    route.append(selected_warehouse)
-    print(route)
-    return route
 
 
 def calculate_distance(location1, location2):

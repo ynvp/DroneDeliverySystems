@@ -68,9 +68,9 @@ class App(tkinter.Tk):
                                                   command=self.clear_marker_list)
         self.clear_marker_button.grid(row=1, column=0, pady=10, padx=10)
 
-        self.connect_marker_button = tkinter.Button(master=self.listbox_button_frame, width=20, text="connect marker with path",
-                                                    command=self.connect_marker_products)
-        self.connect_marker_button.grid(row=2, column=0, pady=10, padx=10)
+        # self.connect_marker_button = tkinter.Button(master=self.listbox_button_frame, width=20, text="connect marker with path",
+        #                                             command=self.connect_marker_products)
+        # self.connect_marker_button.grid(row=2, column=0, pady=10, padx=10)
 
         self.map_widget.set_address("NYC")
 
@@ -93,21 +93,15 @@ class App(tkinter.Tk):
         self.map_widget.add_right_click_menu_command(label="Delete last added location",
                                                      command=self.delete_last_marker,
                                                      pass_coords=True)
-        self.map_widget.add_left_click_map_command(self.delete_last_marker)
+        self.map_widget.add_left_click_map_command(
+            self.add_charging_point_marker_event)
         self.current_customer_counter = 1
         self.current_warehouse_counter = 1
         self.current_charging_point_counter = 1
         self.current_warehouse_marker = None
 
-        # self.default_warehouse_marker = self.map_widget.set_marker(
-        #     40.7194939, - 74.0767397, text="Warehouse1", text_color="green")
-        # self.warehouse_marker_list.append(self.default_warehouse_marker)
-
     def run(self):
-        if len(r.warehouses) > 0 and len(r.package_weights) > 0:
-            if len(r.charging_points) > 0:
-                tkinter.messagebox.showwarning(
-                    'warning', 'Charging points were not added. This may affect path.')
+        if len(r.warehouses) > 0 and len(r.package_weights) > 0 and len(r.charging_points) > 0:
             self.inputDialog = cl.CurrentLocation(self)
             self.wait_window(self.inputDialog.top)
             print('log: current location - ', self.inputDialog.location)
@@ -127,6 +121,8 @@ class App(tkinter.Tk):
                 [self.inputDialog.location, current_loc])
             print(self.final_path)
             r.selected_packages = []
+            self.display_calculated_data()
+            self.connect_marker_products
         else:
             if len(r.warehouses) == 0:
                 tkinter.messagebox.showerror(
@@ -136,6 +132,10 @@ class App(tkinter.Tk):
                 tkinter.messagebox.showerror(
                     'error', 'Packages not yet added!')
                 print('Log: Packages not yet added')
+            if len(r.charging_points) == 0:
+                tkinter.messagebox.showwarning(
+                    'warning', 'Charging points were not added. This may affect path. Exiting calculation.')
+                print('Log: Charging points not yet added')
 
     def add_customer_marker_event(self, coords):
         self.inputDialog = wd.WeightDialog(self)
@@ -157,6 +157,11 @@ class App(tkinter.Tk):
         self.current_customer_counter += 1
         self.marker_list.append(new_marker)
         self.search_marker = new_marker
+
+    def assign_weight(self, customer, weight):
+        r.package_weights[customer] = int(weight)
+        print('log: Product weight assigned successfully!')
+        print(r.package_weights)
 
     def add_warehouse_marker_event(self, coords):
         print("Added warehouse location:", coords)
@@ -185,11 +190,6 @@ class App(tkinter.Tk):
         self.charging_points_marker_list.append(new_marker)
         self.search_marker = new_marker
 
-    def assign_weight(self, customer, weight):
-        r.package_weights[customer] = int(weight)
-        print('log: Product weight assigned successfully!')
-        print(r.package_weights)
-
     def delete_last_marker(self, coords):
         if (len(self.map_widget.canvas_marker_list) > 0):
             self.last_element = self.map_widget.canvas_marker_list.pop()
@@ -212,13 +212,6 @@ class App(tkinter.Tk):
                 # address was invalid (return value is False)
                 self.search_marker = None
             self.search_in_progress = False
-
-    def save_marker(self):
-        if self.search_marker is not None:
-            self.marker_list_box.insert(
-                tkinter.END, f" {len(self.marker_list)}. {self.search_marker.text} ")
-            self.marker_list_box.see(tkinter.END)
-            self.marker_list.append(self.search_marker)
 
     def clear_marker_list(self):
         for marker in self.marker_list:
@@ -245,49 +238,42 @@ class App(tkinter.Tk):
     # Modified marker connector function
     def connect_marker_products(self):
         position_list = []
-        if self.current_warehouse_marker != None:
-            position_list.append(self.current_warehouse_marker.position)
-            marker_list_combined = dict([(customer.text.split(
-                '\n')[0], customer) for customer in self.marker_list])
-            marker_list_combined.update(dict(
-                [(cp.text, cp) for cp in self.charging_points_marker_list]))
-            print(marker_list_combined)
-            for package in self.final_path:
-                if package in marker_list_combined:
-                    marker = marker_list_combined[package]
-                    print(marker)
-                    position_list.append(marker.position)
-
-            if self.marker_path is not None:
-                self.map_widget.delete(self.marker_path)
-
-            print(position_list)
-
-            if len(position_list) > 0:
-                self.marker_path = self.map_widget.set_path(position_list)
-            r.selected_packages_copy.clear()
-        else:
-            tkinter.messagebox.showerror(
-                'error', 'Please click on Give Path button!')
-
-    # Inbuilt marker connector function
-    def connect_marker(self):
-        print(self.marker_list)
-        position_list = []
-
-        for marker in self.marker_list:
-
-            position_list.append(marker.position)
+        # if self.current_warehouse_marker != None:
+        position_list.append(self.current_warehouse_marker.position)
+        marker_list_combined = dict([(customer.text.split(
+            '\n')[0], customer) for customer in self.marker_list])
+        marker_list_combined.update(dict(
+            [(cp.text, cp) for cp in self.charging_points_marker_list]))
+        marker_list_combined.update(dict(
+            [(w.text, w) for w in self.warehouse_marker_list]))
+        # print(marker_list_combined)
+        for package in self.final_path:
+            if package in marker_list_combined:
+                marker = marker_list_combined[package]
+                print(marker)
+                position_list.append(marker.position)
 
         if self.marker_path is not None:
             self.map_widget.delete(self.marker_path)
 
+        # print(position_list)
         if len(position_list) > 0:
             self.marker_path = self.map_widget.set_path(position_list)
+        r.selected_packages_copy.clear()
+        # else:
+        #     tkinter.messagebox.showerror(
+        #         'error', 'Please click on Calculate Path button!')
 
     def clear(self):
         self.search_bar.delete(0, last=tkinter.END)
         self.map_widget.delete(self.search_marker)
+
+    def display_calculated_data(self):
+        p = ''
+        for i in self.final_path:
+            p += i+'-->'
+        self.marker_list_box.insert(
+            tkinter.END, p[:-3])
 
     def on_closing(self, event=0):
         self.destroy()
