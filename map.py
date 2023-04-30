@@ -1,25 +1,25 @@
 import sys
+import customtkinter
 import tkinter
 import tkinter.messagebox
 from tkintermapview import TkinterMapView
 import run as r
 import weight_dialog as wd
 import current_location as cl
+from tkinter import *
+
+customtkinter.set_default_color_theme("green")
 
 
-class App(tkinter.Tk):
+class App(customtkinter.CTk):
     APP_NAME = "Drone Delivery System"
 
     def __init__(self, *args, **kwargs):
-        tkinter.Tk.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.title(self.APP_NAME)
-        width = self.winfo_screenwidth()
-        height = self.winfo_screenheight()
-        self.geometry("%dx%d" % (width, height))
-        self.state('zoomed')
 
-        # self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
+        self.after(0, lambda: self.state('zoomed'))
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.bind("<Return>", self.search)
@@ -28,51 +28,86 @@ class App(tkinter.Tk):
             self.bind("<Command-q>", self.on_closing)
             self.bind("<Command-w>", self.on_closing)
 
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=0)
-        self.grid_columnconfigure(2, weight=0)
-        self.grid_columnconfigure(3)
-        self.grid_rowconfigure(1, weight=1)
+        # ============ create two CTkFrames ============
 
-        self.search_bar = tkinter.Entry(self, width=50)
-        self.search_bar.grid(row=0, column=0, pady=10, padx=10, sticky="we")
-        self.search_bar.focus()
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
-        self.search_bar_button = tkinter.Button(
-            master=self, width=8, text="Search", command=self.search)
-        self.search_bar_button.grid(row=0, column=1, pady=10, padx=10)
+        self.frame_left = customtkinter.CTkFrame(
+            master=self, width=150, corner_radius=0, fg_color=None)
+        self.frame_left.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
 
-        self.search_bar_clear = tkinter.Button(
-            master=self, width=8, text="Clear", command=self.clear)
-        self.search_bar_clear.grid(row=0, column=2, pady=10, padx=10)
+        self.frame_right = customtkinter.CTkFrame(master=self, corner_radius=0)
+        self.frame_right.grid(row=0, column=1, rowspan=1,
+                              pady=0, padx=0, sticky="nsew")
 
-        self.map_widget = TkinterMapView(
-            width=self.winfo_screenwidth(), height=600, corner_radius=0)
-        self.map_widget.grid(row=1, column=0, columnspan=3, sticky="nsew")
+        # ============ frame_left ============
 
-        self.marker_list_box = tkinter.Listbox(self, height=8)
+        self.frame_left.grid_rowconfigure(2, weight=1)
+
+        self.calculate_path_button = customtkinter.CTkButton(
+            master=self.frame_left, text="Calculate Path", command=self.run)
+        self.calculate_path_button.grid(
+            pady=(20, 0), padx=(20, 20), row=0, column=0)
+
+        self.clear_marker_button = customtkinter.CTkButton(master=self.frame_left, text="Clear locations",
+                                                           command=self.clear_marker_list)
+        self.clear_marker_button.grid(
+            pady=(20, 0), padx=(20, 20), row=1, column=0)
+
+        self.marker_list_box_scrollbar = Scrollbar(
+            self.frame_left, orient=tkinter.HORIZONTAL)
+        self.marker_list_box = tkinter.Listbox(
+            self.frame_left, height=40, width=40, fg='white', bg='black', xscrollcommand=self.marker_list_box_scrollbar.set)
+        self.marker_list_box_scrollbar.config(
+            command=self.marker_list_box.xview)
         self.marker_list_box.grid(
-            row=2, column=0, columnspan=1, sticky="ew", padx=10, pady=10)
+            pady=(5, 0), padx=(1, 1), row=2, column=0)
+        self.marker_list_box_scrollbar.grid(column=0, row=3)
 
-        self.listbox_button_frame = tkinter.Frame(master=self)
-        self.listbox_button_frame.grid(
-            row=2, column=1, sticky="nsew", columnspan=2)
+        self.map_label = customtkinter.CTkLabel(
+            self.frame_left, text="Tile Server:", anchor="w")
+        self.map_label.grid(row=3, column=0, padx=(20, 20), pady=(20, 0))
+        self.map_option_menu = customtkinter.CTkOptionMenu(self.frame_left, values=["OpenStreetMap", "Google normal", "Google satellite"],
+                                                           command=self.change_map)
+        self.map_option_menu.grid(row=4, column=0, padx=(20, 20), pady=(10, 0))
 
-        self.listbox_button_frame.grid_columnconfigure(0, weight=1)
+        self.appearance_mode_label = customtkinter.CTkLabel(
+            self.frame_left, text="Appearance Mode:", anchor="w")
+        self.appearance_mode_label.grid(
+            row=5, column=0, padx=(20, 20), pady=(20, 0))
+        self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.frame_left, values=["Light", "Dark", "System"],
+                                                                       command=self.change_appearance_mode)
+        self.appearance_mode_optionemenu.grid(
+            row=6, column=0, padx=(20, 20), pady=(10, 20))
 
-        btn = tkinter.Button(master=self.listbox_button_frame, width=20, text="Calculate Path",
-                             bg="green", fg="white", command=self.run)
-        btn.grid(row=0, column=0, pady=10, padx=10)
+        # ============ frame_right ============
 
-        self.clear_marker_button = tkinter.Button(master=self.listbox_button_frame, width=20, text="clear marker list",
-                                                  command=self.clear_marker_list)
-        self.clear_marker_button.grid(row=1, column=0, pady=10, padx=10)
+        self.frame_right.grid_rowconfigure(1, weight=1)
+        self.frame_right.grid_rowconfigure(0, weight=0)
+        self.frame_right.grid_columnconfigure(0, weight=1)
+        self.frame_right.grid_columnconfigure(1, weight=0)
+        self.frame_right.grid_columnconfigure(2, weight=1)
 
-        # self.connect_marker_button = tkinter.Button(master=self.listbox_button_frame, width=20, text="connect marker with path",
-        #                                             command=self.connect_marker_products)
-        # self.connect_marker_button.grid(row=2, column=0, pady=10, padx=10)
+        self.map_widget = TkinterMapView(self.frame_right, corner_radius=0)
+        self.map_widget.grid(row=1, rowspan=1, column=0,
+                             columnspan=3, sticky="nswe", padx=(0, 0), pady=(0, 0))
+
+        self.search_bar = customtkinter.CTkEntry(master=self.frame_right,
+                                                 placeholder_text="Type address")
+        self.search_bar.grid(row=0, column=0, sticky="we",
+                             padx=(12, 0), pady=12)
+
+        self.button_5 = customtkinter.CTkButton(master=self.frame_right,
+                                                text="Search",
+                                                width=90,
+                                                command=self.search)
+        self.button_5.grid(row=0, column=1, sticky="w", padx=(12, 0), pady=12)
 
         self.map_widget.set_address("NYC")
+        self.map_option_menu.set("OpenStreetMap")
+        self.appearance_mode_optionemenu.set("Dark")
 
         self.marker_list = []
         self.warehouse_marker_list = []
@@ -122,7 +157,7 @@ class App(tkinter.Tk):
             print(self.final_path)
             r.selected_packages = []
             self.display_calculated_data()
-            self.connect_marker_products
+            self.connect_marker_products()
         else:
             if len(r.warehouses) == 0:
                 tkinter.messagebox.showerror(
@@ -193,6 +228,15 @@ class App(tkinter.Tk):
     def delete_last_marker(self, coords):
         if (len(self.map_widget.canvas_marker_list) > 0):
             self.last_element = self.map_widget.canvas_marker_list.pop()
+            # counter decrement
+            if 'Warehouse' in self.last_element.text:
+                self.current_warehouse_counter -= 1
+            if 'Customer' in self.last_element.text:
+                self.current_customer_counter -= 1
+            if 'Charging' in self.last_element.text:
+                self.current_charging_point_counter -= 1
+            self.marker_list_box.insert(
+                tkinter.END, self.last_element.text+" deleted")
             print('log: Element deleted successfully!')
             self.last_element.delete()
         else:
@@ -225,7 +269,6 @@ class App(tkinter.Tk):
         self.marker_list.clear()
         self.warehouse_marker_list.clear()
         self.charging_points_marker_list.clear()
-        self.connect_marker()
         r.delivery_locations.clear()
         r.selected_packages.clear()
         r.selected_packages_copy.clear()
@@ -274,6 +317,20 @@ class App(tkinter.Tk):
             p += i+'-->'
         self.marker_list_box.insert(
             tkinter.END, p[:-3])
+
+    def change_appearance_mode(self, new_appearance_mode: str):
+        customtkinter.set_appearance_mode(new_appearance_mode)
+
+    def change_map(self, new_map: str):
+        if new_map == "OpenStreetMap":
+            self.map_widget.set_tile_server(
+                "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png")
+        elif new_map == "Google normal":
+            self.map_widget.set_tile_server(
+                "https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
+        elif new_map == "Google satellite":
+            self.map_widget.set_tile_server(
+                "https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
 
     def on_closing(self, event=0):
         self.destroy()
