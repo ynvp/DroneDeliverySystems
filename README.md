@@ -1,7 +1,7 @@
 # Drone Delivery Systems using Graph Theory ft. Open TSP
 
-Install project requirements using ``` pip install -r requirements.txt ```
-Run map.py file using ``` python map.py ```
+- Install project requirements using ``` pip install -r requirements.txt ```
+- Run map.py file using ``` python map.py ```
 
 ### Usage
 1. Right click on map to select different options available
