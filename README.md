@@ -1,6 +1,12 @@
 # Drone Delivery Systems using Graph Theory ft. Open TSP
 
 - Install project requirements using ``` pip install -r requirements.txt ```
+- Virtual Environment
+  - Install virtualenv - ``` pip install virtualenv ```
+  - Create environment - ``` virtualenv venv ```
+  - activation:
+    - Windows: ``` venv\Scripts\activate ```
+    - Linux: ``` source venv/bin/activate ```
 - Run map.py file using ``` python map.py ```
 
 ### Usage
