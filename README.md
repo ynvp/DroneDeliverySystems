@@ -7,6 +7,7 @@
   - activation:
     - Windows: ``` venv\Scripts\activate ```
     - Linux: ``` source venv/bin/activate ```
+  - Install requirements using ``` pip install -r requirements.txt ```
 - Run map.py file using ``` python map.py ```
 
 ### Usage
