@@ -1,4 +1,5 @@
-﻿# GraphTheoryProject
+# Drone Delivery Systems using Graph Theory ft. Open TSP
+
 Install project requirements using ``` pip install -r requirements.txt ```
 Run map.py file using ``` python map.py ```
 
