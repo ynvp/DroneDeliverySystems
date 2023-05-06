@@ -11,7 +11,7 @@ Run map.py file using ``` python map.py ```
 6. Search for address in the top search bar
 
 ### Attributions:
-tkintermapview (https://github.com/TomSchimansky/TkinterMapView)
-geopy (https://github.com/geopy/geopy)
-numpy (https://github.com/numpy/numpy)
-python_tsp (https://github.com/fillipe-gsm/python-tsp)
+1. tkintermapview (https://github.com/TomSchimansky/TkinterMapView)
+2. geopy (https://github.com/geopy/geopy)
+3. numpy (https://github.com/numpy/numpy)
+4. python_tsp (https://github.com/fillipe-gsm/python-tsp)
